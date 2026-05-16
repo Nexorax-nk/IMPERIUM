@@ -32,10 +32,12 @@ function Cursor() {
       if (["p","span","h1","h2","h3","h4","h5","h6","li","label"].includes(tag)) return "text";
       return "default";
     }
+    let lastMag=0, cachedEls=[];
     function updateMagnet(mx,my) {
-      const els=document.querySelectorAll("button,a,[class*='btn'],[class*='card']");
+      const now = Date.now();
+      if(now - lastMag > 500) { cachedEls = Array.from(document.querySelectorAll("button,a,[class*='btn'],[class*='card']")); lastMag = now; }
       let best=null,bestDist=90;
-      els.forEach(el=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,d=Math.hypot(mx-cx,my-cy);if(d<bestDist){bestDist=d;best={cx,cy,d};}});
+      cachedEls.forEach(el=>{const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,d=Math.hypot(mx-cx,my-cy);if(d<bestDist){bestDist=d;best={cx,cy,d};}});
       S.magnetTarget=best;
       if(best){const pull=Math.pow(1-best.d/90,2.5)*20,ang=Math.atan2(best.cy-my,best.cx-mx);S.magnetX=mx+Math.cos(ang)*pull;S.magnetY=my+Math.sin(ang)*pull;}
       else{S.magnetX=mx;S.magnetY=my;}
@@ -358,24 +360,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;ove
 `;
 
 // ─── Data (no mock values) ───────────────────────────────────────────────────
-const CHALLENGES = [
-  {id:1,num:"01",status:"active",suit:"⬡",title:"DATA COLLECTION",sub:"& PRE-PROCESSING",desc:"Gather, clean and structure raw healthcare datasets. Handle missing values, normalize features, and build the data pipeline.",tags:["Pandas","NumPy","Scikit-learn","EDA"],objectives:["Load and inspect the hospital dataset","Document all data sources and collection methodology","Handle missing values using imputation strategies","Remove outliers and normalize numerical features","Encode categorical variables (Label / One-Hot)","Export cleaned dataset as processed_data.csv"],dataset:{"Format":"CSV / JSON","Target":"ICU Admission (binary)"},output:["processed_data.csv","data_audit_report.html","preprocessing_pipeline.pkl"],rounds:[1,2]},
-  {id:2,num:"02",status:"active",suit:"◈",title:"FEATURE EXTRACTION",sub:"& MODEL SELECTION",desc:"Engineer meaningful features from the cleaned dataset. Select the most informative variables and compare candidate models.",tags:["Feature Engineering","PCA","Random Forest","XGBoost","SMOTE"],objectives:["Apply PCA / dimensionality reduction techniques","Engineer domain-specific clinical features","Handle class imbalance with SMOTE or class weights","Train at least 3 candidate models (LR, RF, XGBoost)","Compare CV scores and justify model selection","Save feature importance plots"],dataset:{"Input":"processed_data.csv","Val split":"80 / 20"},output:["feature_matrix.csv","model_comparison.csv","feature_importance.png"],rounds:[3,4]},
-  {id:3,num:"03",status:"locked",suit:"▲",title:"MODEL TRAINING",sub:"HYPERPARAMETER TUNING",desc:"Deep-dive into hyperparameter optimization and stratified cross-validation to push your chosen model beyond baseline benchmarks.",tags:["Optuna","MLflow","GridSearchCV","Stratified K-Fold"],objectives:["Implement Optuna / Bayesian hyperparameter optimization","Apply cross-validation with stratified k-fold","Track all metrics: AUC, F1, Precision, Recall via MLflow","Save best model checkpoint and training curves","Document tuning budget and best parameter set"],dataset:{"Input":"feature_matrix.csv","CV Folds":"5"},output:["best_model.pkl","tuning_results.json","training_curves.png"],rounds:[5]},
-  {id:4,num:"04",status:"locked",suit:"◉",title:"MODEL EVALUATION",sub:"& DEPLOYMENT",desc:"Rigorously evaluate your trained model, interpret predictions with SHAP, and package the solution as a deployable API endpoint.",tags:["SHAP","FastAPI","Docker","Prometheus","Model Cards"],objectives:["Evaluate on unseen test set — report AUC, F1, Brier Score","Generate SHAP waterfall and summary plots","Write a Model Card documenting limitations & bias","Package inference as a FastAPI endpoint","Containerize with Docker","Submit final Jupyter notebook"],dataset:{"Eval metrics":"AUC, F1, Brier","API endpoint":"/predict","Submission":"imperium_final.ipynb"},output:["evaluation_report.pdf","shap_plots.png","imperium_final.ipynb","Dockerfile"],rounds:[6,7]},
-];
-
-const ALL_ROUNDS = [
-  {id:1,name:"Data Collection",desc:"Gather and load the raw hospital dataset. Inspect shape, dtypes, missing value counts, and document your data sources.",pts:100,accepts:".ipynb,.py"},
-  {id:2,name:"Preprocessing",desc:"Apply full cleaning pipeline: impute missing values, remove outliers, normalize features, encode categoricals. Output processed_data.csv.",pts:150,accepts:".ipynb,.py"},
-  {id:3,name:"Feature Extraction",desc:"Engineer domain-specific clinical features, apply PCA/dimensionality reduction, and output a documented feature_matrix.csv.",pts:200,accepts:".ipynb,.py"},
-  {id:4,name:"Model Selection",desc:"Train at least 3 candidate models (LR, RF, XGBoost), compare CV scores, and justify your chosen model with a summary report.",pts:250,accepts:".ipynb"},
-  {id:5,name:"Model Training",desc:"Perform hyperparameter tuning (Optuna/GridSearch), handle class imbalance, log all experiments to MLflow, and save the best model checkpoint.",pts:350,accepts:".ipynb"},
-  {id:6,name:"Model Evaluation",desc:"Evaluate on the holdout test set. Report AUC, F1, Brier Score. Generate SHAP waterfall and summary plots. Write a Model Card.",pts:300,accepts:".ipynb"},
-  {id:7,name:"Deployment",desc:"Package inference as a FastAPI endpoint, containerize with Docker, and submit imperium_final.ipynb with full documentation.",pts:500,accepts:".ipynb",isFinal:true},
-];
-
-const TOTAL_XP = ALL_ROUNDS.reduce((a,r)=>a+r.pts,0);
 
 // ─── Clock ───────────────────────────────────────────────────────────────────
 function HudClock() {
@@ -438,7 +422,7 @@ function CardDeck({challenges,onOpen}) {
 }
 
 // ─── Challenge Modal ──────────────────────────────────────────────────────────
-function ChallengeModal({ch,uploads,setUploads,submitted,setSubmitted,submissionCounts,setSubmissionCounts,onClose}) {
+function ChallengeModal({ch,ALL_ROUNDS,userId,uploads,setUploads,submitted,setSubmitted,submissionCounts,setSubmissionCounts,onClose}) {
   const rounds=ALL_ROUNDS.filter(r=>ch.rounds.includes(r.id));
   const completedRounds=rounds.filter(r=>submitted[r.id]).length;
   const progress=rounds.length>0?Math.round((completedRounds/rounds.length)*100):0;
@@ -538,16 +522,36 @@ function ChallengeModal({ch,uploads,setUploads,submitted,setSubmitted,submission
                       {!isDone&&<input type="file" accept={r.accepts} onChange={e=>{if(!e.target.files[0])return;setUploads(p=>({...p,[r.id]:e.target.files[0].name}));}}/>}
                       <div className="upload-ico">{isDone?"✅":hasUpload?"📎":"⬆"}</div>
                       <div className={`upload-txt${isDone||hasUpload?" done":""}`}>{isDone?"SUBMITTED":hasUpload?"FILE READY":"DRAG & DROP OR CLICK"}</div>
+                      {!isDone && !hasUpload && <div style={{fontSize: 9, color: "rgba(255,255,255,0.5)", marginTop: 4}}>.csv max 100KB · .ipynb max 2MB</div>}
                       {hasUpload&&!isDone&&<div className="upload-fname">📄 {uploads[r.id]}</div>}
                     </div>
                   )}
                   <button className={`round-submit-btn${isDone&&subLimitReached?" done-btn":""}`}
                     disabled={!hasUpload||subLimitReached}
-                    onClick={()=>{
+                    onClick={async ()=>{
                       const next=subCount+1;
-                      setSubmissionCounts(p=>({...p,[r.id]:next}));
-                      setUploads(p=>({...p,[r.id]:null}));
-                      if(r.id!==1||next>=maxSubs) setSubmitted(p=>({...p,[r.id]:true}));
+                      const formData = new FormData();
+                      formData.append("user_id", userId);
+                      // Provide dummy blob if file isn't available
+                      const dummyBlob = new Blob(["dummy content"], { type: "text/plain" });
+                      formData.append("file", dummyBlob, uploads[r.id] || "code.py");
+                      
+                      try {
+                        const res = await fetch(`http://localhost:8000/rounds/${r.id}/submit`, {
+                          method: "POST",
+                          body: formData
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          setSubmissionCounts(p=>({...p,[r.id]:data.attempt}));
+                          setUploads(p=>({...p,[r.id]:null}));
+                          if (data.status === "accepted") setSubmitted(p=>({...p,[r.id]:true}));
+                        } else {
+                          alert(data.detail || "Submission failed");
+                        }
+                      } catch (err) {
+                        alert("Network error: " + err);
+                      }
                     }}>
                     {subLimitReached?r.id===1?"✓ ALL 3 SUBMISSIONS USED":"✓ SUBMITTED":hasUpload?r.id===1?`→ SUBMIT (${subCount+1}/${maxSubs})`:"→ SUBMIT CODE":"UPLOAD FILE FIRST"}
                   </button>
@@ -569,7 +573,8 @@ function ChallengeModal({ch,uploads,setUploads,submitted,setSubmitted,submission
 }
 
 // ─── XP Bar Chart ─────────────────────────────────────────────────────────────
-function XPBarChart({submitted}) {
+function XPBarChart({submitted, ALL_ROUNDS}) {
+  if (!ALL_ROUNDS || ALL_ROUNDS.length === 0) return null;
   const maxPts=Math.max(...ALL_ROUNDS.map(r=>r.pts));
   const barH=120;
   return (
@@ -600,6 +605,54 @@ export default function App() {
   const [uploads,setUploads]=useState({});
   const [submitted,setSubmitted]=useState({});
   const [submissionCounts,setSubmissionCounts]=useState({});
+  
+  const [CHALLENGES, setChallenges] = useState([]);
+  const [ALL_ROUNDS, setAllRounds] = useState([]);
+  const [TOTAL_XP, setTotalXP] = useState(0);
+  const [userProfile, setUserProfile] = useState(null);
+  const userId = localStorage.getItem("imperium_user_id");
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [chRes, rRes] = await Promise.all([
+          fetch("http://localhost:8000/challenges"),
+          fetch("http://localhost:8000/rounds")
+        ]);
+        const chData = await chRes.json();
+        const rData = await rRes.json();
+        setChallenges(chData);
+        setAllRounds(rData);
+        setTotalXP(rData.reduce((a,r) => a + r.pts, 0));
+        
+        if (userId) {
+          const uRes = await fetch(`http://localhost:8000/users/${userId}`);
+          if (uRes.ok) {
+            const uData = await uRes.json();
+            setUserProfile(uData);
+          }
+          
+          const subsRes = await fetch(`http://localhost:8000/users/${userId}/submissions`);
+          if (subsRes.ok) {
+            const subsData = await subsRes.json();
+            const newSubCounts = {};
+            const newSubmitted = {};
+            subsData.forEach(s => {
+              if (!newSubCounts[s.round_id] || s.attempt > newSubCounts[s.round_id]) {
+                newSubCounts[s.round_id] = s.attempt;
+              }
+              if (s.status === "accepted") newSubmitted[s.round_id] = true;
+            });
+            setSubmissionCounts(newSubCounts);
+            setSubmitted(newSubmitted);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load data", e);
+      }
+    }
+    loadData();
+  }, [userId]);
 
   useEffect(()=>{
     const s=document.createElement("style");s.textContent=CSS;document.head.appendChild(s);
@@ -616,6 +669,13 @@ export default function App() {
     return rounds.length>0?Math.round((done/rounds.length)*100):0;
   };
 
+  const dynamicChallenges = CHALLENGES.map((ch, i) => {
+    if (i === 0) return { ...ch, status: "active" };
+    const prevCh = CHALLENGES[i - 1];
+    const prevProg = getChallengeProgress(prevCh);
+    return { ...ch, status: prevProg === 100 ? "active" : "locked" };
+  });
+
   const go=t=>{setTab(t);window.scrollTo&&window.scrollTo({top:0});};
   const TABS=[["home","⬡ HOME"],["dashboard","◈ DASHBOARD"],["tutorials","◎ TUTORIALS"],["challenges","▲ CHALLENGES"],["profile","◉ PROFILE"],["results","🏆 RESULTS"]];
 
@@ -627,7 +687,7 @@ export default function App() {
       <div className="gbg"/>
 
       {openChallenge&&(
-        <ChallengeModal ch={openChallenge} uploads={uploads} setUploads={setUploads}
+        <ChallengeModal ch={openChallenge} ALL_ROUNDS={ALL_ROUNDS} userId={userId} uploads={uploads} setUploads={setUploads}
           submitted={submitted} setSubmitted={setSubmitted}
           submissionCounts={submissionCounts} setSubmissionCounts={setSubmissionCounts}
           onClose={()=>setOpenChallenge(null)}/>
@@ -675,12 +735,12 @@ export default function App() {
               }} style={{position:"absolute",inset:0,width:"100%",height:"100%",opacity:.85}}/>
             </div>
             <div className="home-eyebrow">ATHERA PRESENTS</div>
-            <div className="home-title">IMPERIUM</div>
+            <img src="/imperium-logo.png" alt="IMPERIUM" style={{width: "100%", maxWidth: 800, display: "block", margin: "-35px auto -35px", filter: "drop-shadow(0 0 30px rgba(0,245,255,0.45))", position: "relative", zIndex: 10}} />
             <div className="home-sub">— AN IMMERSIVE AI CHALLENGE EXPERIENCE —</div>
             <p className="home-desc">Solve real-world healthcare AI problems across 4 progressive challenges and 7 competitive rounds. Build, train, evaluate and deploy your ML model.</p>
             <div className="home-ctas">
               <button className="btn-primary" onClick={()=>go("challenges")}>→ VIEW CHALLENGES</button>
-              <button className="btn-secondary" onClick={()=>go("tutorials")}>◎ WATCH TUTORIALS</button>
+              <button className="btn-secondary" onClick={()=>go("tutorials")}>◎ SEE TUTORIALS</button>
             </div>
             <div className="home-stats">
               {[["04","CHALLENGES"],["07","ROUNDS"],[TOTAL_XP,"XP POOL"]].map(([v,l])=>(
@@ -698,8 +758,8 @@ export default function App() {
           </div>
           <div className="ticker-wrap">
             <div className="ticker">
-              {["⚡ IMPERIUM CHALLENGE IS LIVE","CHALLENGE 1 & 2 NOW OPEN","SUBMIT ROUND CODE TO EARN XP","FINAL SUBMISSION: .IPYNB FILE","HEALTHCARE AI",
-                "⚡ IMPERIUM CHALLENGE IS LIVE","CHALLENGE 1 & 2 NOW OPEN","SUBMIT ROUND CODE TO EARN XP","FINAL SUBMISSION: .IPYNB FILE","HEALTHCARE AI"].map((t,i)=>(
+              {["⚡ IMPERIUM CHALLENGE IS LIVE","CHALLENGE 1 NOW OPEN","SUBMIT ROUND CODE TO EARN XP","FINAL SUBMISSION: .IPYNB FILE","HEALTHCARE AI",
+                "⚡ IMPERIUM CHALLENGE IS LIVE","CHALLENGE 1 NOW OPEN","SUBMIT ROUND CODE TO EARN XP","FINAL SUBMISSION: .IPYNB FILE","HEALTHCARE AI"].map((t,i)=>(
                 <span key={i}>{t}<span className="tsp"> ///</span></span>
               ))}
             </div>
@@ -725,7 +785,7 @@ export default function App() {
             <div className="panel">
               <div className="panel-title">CHALLENGE PIPELINE</div>
               <div style={{display:"flex",alignItems:"stretch",gap:0,overflowX:"auto",paddingBottom:4}}>
-                {CHALLENGES.map((ch,ci)=>{
+                {dynamicChallenges.map((ch,ci)=>{
                   const chRounds=ALL_ROUNDS.filter(r=>ch.rounds.includes(r.id));
                   const prog=getChallengeProgress(ch);
                   const accent=ch.id===1?"var(--c)":ch.id===2?"var(--p)":ch.id===3?"var(--gold)":"var(--grn)";
@@ -753,7 +813,7 @@ export default function App() {
                           ))}
                         </div>
                       </div>
-                      {ci<CHALLENGES.length-1&&(
+                      {ci<dynamicChallenges.length-1&&(
                         <div style={{flexShrink:0,width:36,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"0 2px"}}>
                           <div style={{width:"100%",height:1,background:"rgba(0,245,255,.15)"}}/>
                           <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:8,color:"rgba(0,245,255,.25)"}}>→</div>
@@ -770,7 +830,7 @@ export default function App() {
           <div style={{padding:"0 32px",display:"grid",gridTemplateColumns:"2fr 1fr",gap:16,marginBottom:20}}>
             <div className="panel">
               <div className="panel-title">XP EARNED PER ROUND</div>
-              <XPBarChart submitted={submitted}/>
+              <XPBarChart submitted={submitted} ALL_ROUNDS={ALL_ROUNDS}/>
               <div style={{display:"flex",gap:16,marginTop:10}}>
                 <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,background:"var(--c)",borderRadius:1}}/><span style={{fontFamily:"'Share Tech Mono',monospace",fontSize:7,color:"var(--dim)",letterSpacing:2}}>COMPLETED</span></div>
                 <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,background:"rgba(0,245,255,.15)",border:"1px solid rgba(0,245,255,.2)",borderRadius:1}}/><span style={{fontFamily:"'Share Tech Mono',monospace",fontSize:7,color:"var(--dim)",letterSpacing:2}}>PENDING</span></div>
@@ -778,7 +838,7 @@ export default function App() {
             </div>
             <div className="panel">
               <div className="panel-title purple">CHALLENGE PROGRESS</div>
-              {CHALLENGES.map(ch=>{
+              {dynamicChallenges.map(ch=>{
                 const prog=getChallengeProgress(ch);
                 return (
                   <div key={ch.id} style={{marginBottom:16,cursor:ch.status!=="locked"?"pointer":"default"}} onClick={()=>{if(ch.status!=="locked")setOpenChallenge(ch);}}>
@@ -793,7 +853,7 @@ export default function App() {
               <div style={{marginTop:8,background:"rgba(0,0,0,.35)",border:"1px solid rgba(0,245,255,.1)",padding:"18px 14px",textAlign:"center"}}>
                 <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:7,color:"var(--dim)",letterSpacing:3,marginBottom:8,textTransform:"uppercase"}}>Overall Completion</div>
                 <div style={{fontFamily:"'Orbitron',monospace",fontSize:38,fontWeight:900,color:"var(--c)",textShadow:"0 0 24px var(--c)",lineHeight:1}}>
-                  {Math.round(CHALLENGES.reduce((a,ch)=>a+getChallengeProgress(ch),0)/CHALLENGES.length)}%
+                  {dynamicChallenges.length > 0 ? Math.round(dynamicChallenges.reduce((a,ch)=>a+getChallengeProgress(ch),0)/dynamicChallenges.length) : 0}%
                 </div>
               </div>
             </div>
@@ -823,7 +883,7 @@ export default function App() {
             </div>
             <div className="panel">
               <div className="panel-title gold">QUICK REFERENCE</div>
-              {[["Submission format",".ipynb or .py"],["Final notebook","imperium_final.ipynb"],["MLflow port","localhost:5000"],["API endpoint","POST /predict"]].map(([k,v],i)=>(
+              {[["Submission format",".csv max 100KB · .ipynb max 2MB"],["Final notebook","imperium_final.ipynb"],["MLflow port","localhost:5000"],["API endpoint","POST /predict"]].map(([k,v],i)=>(
                 <div key={i} className="activity-row"><span>{k}</span><span style={{color:"var(--c)"}}>{v}</span></div>
               ))}
             </div>
@@ -842,7 +902,7 @@ export default function App() {
             <div className="card-deck-bg"/>
             <div className="card-deck-title">CHALLENGE DECK</div>
             <div className="card-deck-sub">SWIPE THROUGH CHALLENGES · TAP TO OPEN DETAILS & ROUNDS</div>
-            <CardDeck challenges={CHALLENGES} onOpen={setOpenChallenge}/>
+            <CardDeck challenges={dynamicChallenges} onOpen={setOpenChallenge}/>
             <div style={{marginTop:40,fontFamily:"'Share Tech Mono',monospace",fontSize:8,color:"rgba(0,245,255,.2)",letterSpacing:3,textAlign:"center"}}>
               🔒 LOCKED CHALLENGES UNLOCK AS YOU COMPLETE PREVIOUS ONES
             </div>
@@ -855,9 +915,9 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:16}}>
               <div className="profile-card">
                 <div className="avatar">ME</div>
-                <div className="profile-name">YOUR NAME</div>
+                <div className="profile-name">{userProfile ? userProfile.name.toUpperCase() : "YOUR NAME"}</div>
                 <div className="profile-rank">◈ PARTICIPANT</div>
-                <div className="profile-id">ID: —</div>
+                <div className="profile-id">ID: {userProfile ? userProfile.id : "—"}</div>
                 <div className="profile-divider"/>
                 <div className="profile-stat-row">
                   <div className="pstat"><div className="pstat-val">{earnedXP}</div><div className="pstat-lbl">XP</div></div>
@@ -866,7 +926,7 @@ export default function App() {
               </div>
               <div className="panel">
                 <div className="panel-title gold">XP BREAKDOWN</div>
-                {CHALLENGES.map(ch=>{
+                {dynamicChallenges.map(ch=>{
                   const accent=ch.id===1?"var(--c)":ch.id===2?"var(--p)":ch.id===3?"var(--gold)":"var(--grn)";
                   const earned=ALL_ROUNDS.filter(r=>ch.rounds.includes(r.id)&&submitted[r.id]).reduce((a,r)=>a+r.pts,0);
                   const total=ALL_ROUNDS.filter(r=>ch.rounds.includes(r.id)).reduce((a,r)=>a+r.pts,0);

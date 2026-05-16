@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const CSS = `
@@ -628,7 +629,7 @@ function Loader({ onDone }) {
     const resize = () => { W = canvas.width = warpC.width = window.innerWidth; H = canvas.height = warpC.height = window.innerHeight; };
     resize(); window.addEventListener("resize", resize);
 
-    const TOTAL_DUR = 30000, BASE_SPD = 1/TOTAL_DUR, HELD_SPD = BASE_SPD*14;
+    const TOTAL_DUR = 5000, BASE_SPD = 1/TOTAL_DUR, HELD_SPD = BASE_SPD*14;
     let held=false, progress=0, done=false;
 
     const STATUSES = [
@@ -1499,7 +1500,7 @@ function Loader({ onDone }) {
   return (
     <div id="imp-loader">
       <canvas ref={canvasRef} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} />
-      <div id="imp-loader-title">IMPERIUM</div>
+      <img src="/imperium-logo.png" alt="IMPERIUM" style={{width: "100%", maxWidth: 720, display: "block", margin: "-220px auto 20px", position: "relative", zIndex: 20, filter: "drop-shadow(0 0 35px rgba(0,245,255,0.55))"}} />
       <div id="imp-loader-sub">COMBAT MECH ONLINE · ARENA 2080</div>
       <div id="imp-loader-status" ref={statusRef}>[ SYS ] BOOTING COMBAT AI...</div>
       <canvas ref={warpRef} id="imp-warp-overlay" />
@@ -2715,10 +2716,12 @@ function Cursor() {
       return "default";
     }
 
+    let lastMag=0, cachedEls=[];
     function updateMagnet(mx,my) {
-      const els=document.querySelectorAll("button,a,[class*='btn'],[class*='card']");
+      const now = Date.now();
+      if(now - lastMag > 500) { cachedEls = Array.from(document.querySelectorAll("button,a,[class*='btn'],[class*='card']")); lastMag = now; }
       let best=null,bestDist=90;
-      els.forEach(el=>{
+      cachedEls.forEach(el=>{
         const r=el.getBoundingClientRect();
         const cx=r.left+r.width/2, cy=r.top+r.height/2;
         const d=Math.hypot(mx-cx,my-cy);
@@ -2999,6 +3002,7 @@ function Page({id,active,className="",children,style={}}) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function ImperiumPage() {
+  const navigate = useNavigate();
   const [loaderDone,setLoaderDone]=useState(false);
   const [page,setPage]=useState("pl");
   const [members,setMembers]=useState([false,false,false]);
@@ -3021,17 +3025,35 @@ export default function ImperiumPage() {
     window.scrollTo({top:0,behavior:"smooth"});
   },[]);
 
-  function doLogin() {
+  async function doLogin() {
     setLoginAlert(""); setLoginSucc("");
     if(!loginEmail||!loginPwd){setLoginAlert("⚠ FILL ALL REQUIRED FIELDS.");return;}
     if(loginEmail.length<3){setLoginAlert("⚠ USERNAME TOO SHORT.");return;}
     if(loginPwd.length<6){setLoginAlert("⚠ PASSWORD MUST BE AT LEAST 6 CHARACTERS.");return;}
     setLoginLoading(true);
-    setTimeout(()=>{
+    
+    try {
+      const res = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPwd })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setLoginAlert("⚠ " + (data.detail ? data.detail.toUpperCase() : "INVALID CREDENTIALS."));
+        setLoginLoading(false);
+        return;
+      }
+      
+      localStorage.setItem("imperium_user_id", data.user_id);
       setLoginLoading(false);
-      setLoginSucc("✓ AUTHENTICATION SUCCESSFUL. ENTERING IMPERIUM...");
-      setTimeout(()=>go("pl"),2200);
-    },1600);
+      setLoginSucc("✓ " + data.message.toUpperCase() + ". ENTERING IMPERIUM...");
+      setTimeout(()=>navigate({ to: '/dashboard' }), 2200);
+    } catch (err) {
+      setLoginAlert("⚠ CONNECTION ERROR TO ATHERA MAINFRAME.");
+      setLoginLoading(false);
+    }
   }
 
   function doRegister() {
@@ -3084,10 +3106,20 @@ export default function ImperiumPage() {
       <Page id="pl" active={page==="pl"} style={{alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>
         <RoboticLab />
         <div className="imp-hero">
-          <div className="imp-h-ather"><span className="imp-aico">◆</span>ATHERA PRESENTS<span className="imp-aico">◆</span></div>
-          <h1 className="imp-htitle"><span className="imp-gt">IMPERIUM</span></h1>
-          <div className="imp-hsub">— AN IMMERSIVE AI CHALLENGE EXPERIENCE —</div>
-          <div className="imp-htag">BUILD · SOLVE · RESTORE · THE FUTURE IS IN YOUR CODE</div>
+          <div className="imp-h-ather">
+            <span className="imp-aico">◆</span>
+            ATHERA PRESENTS
+            <span className="imp-aico">◆</span>
+          </div>
+          <h1 className="imp-htitle" style={{ margin: "0", padding: "0" }}>
+            <img src="/imperium-logo.png" alt="IMPERIUM" style={{ width: "100%", maxWidth: 860, display: "block", margin: "-10px auto -55px", filter: "drop-shadow(0 0 35px rgba(0,245,255,0.55))", position: "relative", zIndex: 10 }} />
+          </h1>
+          <div className="imp-hsub" style={{ marginTop: "0px", marginBottom: "8px" }}>
+            — AN IMMERSIVE AI CHALLENGE EXPERIENCE —
+          </div>
+          <div className="imp-htag" style={{ marginTop: "0px", marginBottom: "14px" }}>
+            BUILD · SOLVE · RESTORE · THE FUTURE IS IN YOUR CODE
+          </div>
           <div className="imp-hcta">
             <button className="imp-btnp" onClick={()=>go("plog")}>LOGIN</button>
           </div>
@@ -3116,8 +3148,8 @@ export default function ImperiumPage() {
             <path d="M16 4L20 14L28 8L24 20H8L4 8L12 14L16 4Z" stroke="#00f5ff" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
             <rect x="8" y="22" width="16" height="4" rx="1" fill="rgba(0,245,255,.28)" stroke="#00f5ff" strokeWidth="1"/>
           </svg>
-          <div className="imp-aclogo" style={{fontSize:"clamp(22px,3.5vw,32px)",letterSpacing:6}}>IMPERIUM</div>
-          <div className="imp-acsub" style={{marginTop:4,marginBottom:18,fontSize:9}}>SECURE ACCESS TERMINAL · v2080</div>
+          <img src="/imperium-logo.png" alt="IMPERIUM" style={{width: "100%", maxWidth: 450, display: "block", margin: "-25px auto -20px", position: "relative", zIndex: 10, filter: "drop-shadow(0 0 15px rgba(0,245,255,0.5))"}} />
+          <div className="imp-acsub" style={{marginTop:2,marginBottom:12,fontSize:9}}>SECURE ACCESS TERMINAL · v2080</div>
 
           {/* Main card */}
           <div className="imp-apanel" style={{width:"100%",position:"relative",padding:"32px 30px 26px"}}>
