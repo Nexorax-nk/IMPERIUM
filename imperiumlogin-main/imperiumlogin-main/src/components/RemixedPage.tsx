@@ -2924,7 +2924,12 @@ function Cursor() {
     };
   },[]);
 
-  return <canvas ref={canvasRef} style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:999999,width:"100%",height:"100%"}} />;
+  return <canvas ref={canvasRef} style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:999999,width:"100%",height:"100%", display: "block"}} />;
+}
+
+function CursorWrapper({page}:{page:string}) {
+  if (page === 'plog') return null;
+  return <Cursor />;
 }
 
 // ─── HUD TIME ─────────────────────────────────────────────────────────────────
@@ -3086,10 +3091,10 @@ export default function ImperiumPage() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {!loaderDone && <Loader onDone={()=>setLoaderDone(true)} />}
       {showIntro && <IntroSequence onComplete={()=>navigate({ to: '/dashboard' })} />}
-      <Cursor />
+      <CursorWrapper page={page} />
       <div className="imp-scanlines"></div>
       <div className="imp-gbg"></div>
-      <CinematicSpace />
+      {page !== 'plog' && <CinematicSpace />}
 
       {/* HUD */}
       <div className="imp-hud imp-htl">SYS.STATUS: <span style={{color:"var(--grn)"}}>ONLINE</span><br/>NODE: 2080.ATHER.NET<br/><HudTime /></div>
@@ -3186,9 +3191,21 @@ export default function ImperiumPage() {
       </Page>
 
       {/* ── LOGIN ── */}
-      <Page id="plog" active={page==="plog"} style={{alignItems:"center",justifyContent:"center",padding:"90px 24px 40px", position:"relative"}}>
-        <RoboticLab />
-        <div style={{position:"relative",zIndex:10000,display:"flex",flexDirection:"column",alignItems:"center",width:"100%",maxWidth:460, pointerEvents: "auto"}}>
+      <Page id="plog" active={page==="plog"} style={{alignItems:"center",justifyContent:"center",padding:"90px 24px 40px", position:"relative", cursor:"auto"}}>
+        {/* Lightweight CSS-only login background - replaces heavy RoboticLab canvas */}
+        <div style={{position:"absolute",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"}}>
+          <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 40%, rgba(0,40,60,0.8) 0%, rgba(2,8,16,1) 70%)"}} />
+          <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(0,245,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.018) 1px,transparent 1px)",backgroundSize:"48px 48px"}} />
+          {[...Array(18)].map((_,i)=>(
+            <div key={i} style={{position:"absolute",width:i%3===0?2:1,height:i%3===0?2:1,borderRadius:"50%",background:`rgba(0,245,255,${0.3+Math.random()*0.5})`,boxShadow:"0 0 6px rgba(0,245,255,0.6)",left:`${5+i*5.2}%`,top:`${10+Math.sin(i*1.3)*35}%`,animation:`login-float-${i%3} ${4+i*0.4}s ease-in-out infinite`,animationDelay:`${i*0.3}s`}} />
+          ))}
+        </div>
+        <style>{`
+          @keyframes login-float-0{0%,100%{transform:translateY(0px) scale(1);opacity:0.4}50%{transform:translateY(-12px) scale(1.2);opacity:0.9}}
+          @keyframes login-float-1{0%,100%{transform:translateY(0px);opacity:0.3}50%{transform:translateY(-8px);opacity:0.7}}
+          @keyframes login-float-2{0%,100%{transform:translateY(0px) scale(1);opacity:0.5}50%{transform:translateY(-16px) scale(0.8);opacity:1}}
+        `}</style>
+        <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",width:"100%",maxWidth:460, pointerEvents: "auto"}}>
           {/* Logo + title */}
           <svg viewBox="0 0 32 32" fill="none" style={{filter:"drop-shadow(0 0 14px #00f5ff)",width:44,height:44,marginBottom:8}}>
             <path d="M16 4L20 14L28 8L24 20H8L4 8L12 14L16 4Z" stroke="#00f5ff" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
