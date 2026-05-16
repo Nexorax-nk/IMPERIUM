@@ -537,7 +537,7 @@ function ChallengeModal({ch,ALL_ROUNDS,userId,uploads,setUploads,submitted,setSu
                       formData.append("file", dummyBlob, uploads[r.id] || "code.py");
                       
                       try {
-                        const res = await fetch(`http://localhost:8000/rounds/${r.id}/submit`, {
+                        const res = await fetch(`https://imperium-api-kfob.onrender.com/rounds/${r.id}/submit`, {
                           method: "POST",
                           body: formData
                         });
@@ -616,8 +616,8 @@ export default function App() {
     async function loadData() {
       try {
         const [chRes, rRes] = await Promise.all([
-          fetch("http://localhost:8000/challenges"),
-          fetch("http://localhost:8000/rounds")
+          fetch("https://imperium-api-kfob.onrender.com/challenges"),
+          fetch("https://imperium-api-kfob.onrender.com/rounds")
         ]);
         const chData = await chRes.json();
         const rData = await rRes.json();
@@ -626,13 +626,13 @@ export default function App() {
         setTotalXP(rData.reduce((a,r) => a + r.pts, 0));
         
         if (userId) {
-          const uRes = await fetch(`http://localhost:8000/users/${userId}`);
+          const uRes = await fetch(`https://imperium-api-kfob.onrender.com/users/${userId}`);
           if (uRes.ok) {
             const uData = await uRes.json();
             setUserProfile(uData);
           }
           
-          const subsRes = await fetch(`http://localhost:8000/users/${userId}/submissions`);
+          const subsRes = await fetch(`https://imperium-api-kfob.onrender.com/users/${userId}/submissions`);
           if (subsRes.ok) {
             const subsData = await subsRes.json();
             const newSubCounts = {};

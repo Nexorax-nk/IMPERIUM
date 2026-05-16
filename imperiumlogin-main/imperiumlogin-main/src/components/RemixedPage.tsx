@@ -3031,7 +3031,7 @@ export default function ImperiumPage() {
     setLoginLoading(true);
     
     try {
-      const res = await fetch("http://localhost:8000/auth/login", {
+      const res = await fetch("https://imperium-api-kfob.onrender.com/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPwd })
