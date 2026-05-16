@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { RouterProvider } from '@tanstack/react-router'
 import { getRouter } from './router'
 import './styles.css'
+import './imperium.css'
 
 const router = getRouter()
 
