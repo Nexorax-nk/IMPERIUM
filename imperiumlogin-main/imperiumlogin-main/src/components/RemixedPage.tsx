@@ -2713,7 +2713,7 @@ function Cursor() {
         if (t==="a") return "link";
         if (typeof c==="string"&&/card/i.test(c)) return "card";
       }
-      if (["p","span","h1","h2","h3","h4","h5","h6","li","label"].includes(tag)) return "text";
+      if (["p","span","h1","h2","h3","h4","h5","h6","li","label","input","textarea"].includes(tag)) return "text";
       return "default";
     }
 
@@ -3185,7 +3185,7 @@ export default function ImperiumPage() {
       {/* ── LOGIN ── */}
       <Page id="plog" active={page==="plog"} style={{alignItems:"center",justifyContent:"center",padding:"90px 24px 40px", position:"relative"}}>
         <RoboticLab />
-        <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",width:"100%",maxWidth:460}}>
+        <div style={{position:"relative",zIndex:10000,display:"flex",flexDirection:"column",alignItems:"center",width:"100%",maxWidth:460, pointerEvents: "auto"}}>
           {/* Logo + title */}
           <svg viewBox="0 0 32 32" fill="none" style={{filter:"drop-shadow(0 0 14px #00f5ff)",width:44,height:44,marginBottom:8}}>
             <path d="M16 4L20 14L28 8L24 20H8L4 8L12 14L16 4Z" stroke="#00f5ff" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
@@ -3232,7 +3232,7 @@ export default function ImperiumPage() {
                   value={loginEmail}
                   onChange={e=>setLoginEmail(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&doLogin()}
-                  style={{fontFamily:"'Share Tech Mono',monospace",letterSpacing:1}}
+                  style={{fontFamily:"'Share Tech Mono',monospace",letterSpacing:1, cursor: "text", pointerEvents: "auto"}}
                 />
               </div>
             </div>
@@ -3251,7 +3251,7 @@ export default function ImperiumPage() {
                   value={loginPwd}
                   onChange={e=>setLoginPwd(e.target.value)}
                   onKeyDown={e=>e.key==="Enter"&&doLogin()}
-                  style={{fontFamily:"'Share Tech Mono',monospace",letterSpacing:3}}
+                  style={{fontFamily:"'Share Tech Mono',monospace",letterSpacing:3, cursor: "text", pointerEvents: "auto"}}
                 />
               </div>
             </div>
