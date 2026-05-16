@@ -3016,10 +3016,6 @@ export default function ImperiumPage() {
   const [regLoading,setRegLoading]=useState(false);
   const [showIntro,setShowIntro]=useState(false);
 
-  useEffect(()=>{
-    const s=document.createElement("style"); s.textContent=CSS; document.head.appendChild(s);
-    return ()=>document.head.removeChild(s);
-  },[]);
 
   const go=useCallback((id)=>{
     setPage(id);
@@ -3084,6 +3080,7 @@ export default function ImperiumPage() {
 
   return (
     <div className="imp-root">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
       {!loaderDone && <Loader onDone={()=>setLoaderDone(true)} />}
       {showIntro && <IntroSequence onComplete={()=>navigate({ to: '/dashboard' })} />}
       <Cursor />
