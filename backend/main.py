@@ -86,6 +86,30 @@ users_db: dict = {
         "password": "password123",
         "xp": 0,
         "joined_at": datetime.datetime.utcnow().isoformat(),
+    },
+    "USER_003": {
+        "id": "USER_003",
+        "name": "Charlie Coder",
+        "email": "charlie@example.com",
+        "password": "password123",
+        "xp": 0,
+        "joined_at": datetime.datetime.utcnow().isoformat(),
+    },
+    "USER_004": {
+        "id": "USER_004",
+        "name": "Diana Dev",
+        "email": "diana@example.com",
+        "password": "password123",
+        "xp": 0,
+        "joined_at": datetime.datetime.utcnow().isoformat(),
+    },
+    "USER_005": {
+        "id": "USER_005",
+        "name": "Eve Engineer",
+        "email": "eve@example.com",
+        "password": "password123",
+        "xp": 0,
+        "joined_at": datetime.datetime.utcnow().isoformat(),
     }
 }
 submissions_db: dict = {}

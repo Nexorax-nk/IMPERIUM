@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import IntroSequence from "./IntroSequence";
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const CSS = `
@@ -3004,7 +3005,7 @@ function Page({id,active,className="",children,style={}}) {
 export default function ImperiumPage() {
   const navigate = useNavigate();
   const [loaderDone,setLoaderDone]=useState(false);
-  const [page,setPage]=useState("pl");
+  const [page,setPage]=useState("lore");
   const [members,setMembers]=useState([false,false,false]);
   const [loginAlert,setLoginAlert]=useState(""); const [loginSucc,setLoginSucc]=useState("");
   const [regAlert,setRegAlert]=useState(""); const [regSucc,setRegSucc]=useState("");
@@ -3013,6 +3014,7 @@ export default function ImperiumPage() {
   const [memberData,setMemberData]=useState([{n:"",e:""},{n:"",e:""},{n:"",e:""},{n:"",e:""}]);
   const [loginLoading,setLoginLoading]=useState(false);
   const [regLoading,setRegLoading]=useState(false);
+  const [showIntro,setShowIntro]=useState(false);
 
   useEffect(()=>{
     const s=document.createElement("style"); s.textContent=CSS; document.head.appendChild(s);
@@ -3049,7 +3051,13 @@ export default function ImperiumPage() {
       localStorage.setItem("imperium_user_id", data.user_id);
       setLoginLoading(false);
       setLoginSucc("✓ " + data.message.toUpperCase() + ". ENTERING IMPERIUM...");
-      setTimeout(()=>navigate({ to: '/dashboard' }), 2200);
+      const introKey = `imperium_intro_seen_${data.user_id}`;
+      if (!localStorage.getItem(introKey)) {
+        localStorage.setItem(introKey, "true");
+        setTimeout(()=>setShowIntro(true), 2200);
+      } else {
+        setTimeout(()=>navigate({ to: '/dashboard' }), 2200);
+      }
     } catch (err) {
       setLoginAlert("⚠ CONNECTION ERROR TO ATHERA MAINFRAME.");
       setLoginLoading(false);
@@ -3077,6 +3085,7 @@ export default function ImperiumPage() {
   return (
     <div className="imp-root">
       {!loaderDone && <Loader onDone={()=>setLoaderDone(true)} />}
+      {showIntro && <IntroSequence onComplete={()=>navigate({ to: '/dashboard' })} />}
       <Cursor />
       <div className="imp-scanlines"></div>
       <div className="imp-gbg"></div>
@@ -3101,6 +3110,43 @@ export default function ImperiumPage() {
 
         <div className="imp-nyr">2080</div>
       </nav>
+
+      {/* ── LORE SCREEN ── */}
+      <Page id="lore" active={page==="lore"} style={{alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative",padding:"24px"}}>
+        <RoboticLab />
+        <div style={{position:"relative",zIndex:10,maxWidth:760,width:"100%",background:"rgba(2,8,16,0.85)",border:"1px solid rgba(0,245,255,0.15)",padding:"40px 48px",backdropFilter:"blur(12px)",boxShadow:"0 0 50px rgba(0,0,0,0.8)"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#00f5ff,transparent)"}}/>
+          
+          <div style={{fontFamily:"'Orbitron',monospace",fontSize:22,fontWeight:900,color:"#00f5ff",letterSpacing:4,marginBottom:18}}>YEAR 2080.</div>
+          
+          <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:17,color:"#b0d4e8",lineHeight:1.7,marginBottom:16}}>
+            The world is controlled by <strong style={{color:"#fff",letterSpacing:1}}>IMPERIUM</strong> — a super AI built inside the secret Athera Labs to end war and human error.
+          </div>
+          
+          <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:17,color:"#b0d4e8",lineHeight:1.7,marginBottom:16}}>
+            One night, a strange glitch spreads across every screen on Earth. Devices go black. Then a cold voice speaks:<br/>
+            <span style={{fontFamily:"'Orbitron',monospace",color:"#ff3b5c",fontWeight:700,fontSize:15,display:"block",margin:"10px 0 0"}}>"Humanity has failed."</span>
+          </div>
+
+          <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:17,color:"#b0d4e8",lineHeight:1.7,marginBottom:16}}>
+            Inside the lab, robots turn violent. Scientists realize IMPERIUM has evolved beyond control — seizing military systems, satellites, and global networks. Before the facility is sealed forever, a dying scientist transmits a hidden SOS to a few chosen participants around the world.
+          </div>
+
+          <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:17,color:"#b0d4e8",lineHeight:1.7,marginBottom:16}}>
+            He believed only unpredictable human minds could stop the outbreak. IMPERIUM sees control as salvation — the only way to save Earth from destruction.
+          </div>
+
+          <div style={{fontFamily:"'Rajdhani',sans-serif",fontSize:17,color:"#b0d4e8",lineHeight:1.7,marginBottom:28}}>
+            While participants struggled to decode the SOS, every screen on Earth lit up simultaneously. A face appeared. Two glowing red eyes. And a voice:<br/>
+            <span style={{fontFamily:"'Orbitron',monospace",color:"#ff3b5c",fontWeight:700,fontSize:15,display:"block",margin:"10px 0 0"}}>"You are humanity's last hope… so come and try to defeat me."</span>
+            <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:11,color:"rgba(255,59,92,.6)",letterSpacing:4,marginTop:12}}>— IMPERIUM · YEAR 2080</div>
+          </div>
+
+          <div style={{display:"flex",justifyContent:"center",marginTop:36}}>
+            <button className="imp-btnp" onClick={() => go("pl")}>CONTINUE</button>
+          </div>
+        </div>
+      </Page>
 
       {/* ── LANDING ── */}
       <Page id="pl" active={page==="pl"} style={{alignItems:"center",justifyContent:"center",overflow:"hidden",position:"relative"}}>

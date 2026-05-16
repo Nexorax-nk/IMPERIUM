@@ -868,12 +868,12 @@ export default function App() {
           </div>
           <div style={{padding:"22px 32px 28px",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}}>
             <div className="panel" style={{gridColumn:"1/-1"}}>
-              <div style={{background:"#000",width:"100%",aspectRatio:"16/6",display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6,marginBottom:12}}>
-                <div style={{textAlign:"center"}}>
-                  <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(0,245,255,.1)",border:"2px solid rgba(0,245,255,.4)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 10px",fontSize:22,cursor:"pointer"}}>▶</div>
-                  <div style={{fontFamily:"'Share Tech Mono',monospace",fontSize:9,color:"rgba(0,245,255,.5)",letterSpacing:3}}>INTRO TO THE CHALLENGE</div>
-                </div>
-              </div>
+              <div className="panel-title">INTRO TO THE CHALLENGE</div>
+              <video 
+                src="/tutorial.mp4" 
+                controls 
+                style={{width: "100%", borderRadius: 6, display: "block", background: "#000"}}
+              />
             </div>
             <div className="panel">
               <div className="panel-title purple">RESOURCES & DOCS</div>
