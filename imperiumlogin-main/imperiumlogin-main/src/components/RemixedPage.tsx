@@ -2771,14 +2771,17 @@ function Cursor() {
       }
     };
     const onClick = e => {
+      const tag = e.target.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'button') return;
+      
       spawnRipple(e.clientX,e.clientY);
-      for(let i=0;i<20;i++){
-        const ang=(i/20)*Math.PI*2+Math.random()*.4, v=2.5+Math.random()*6;
-        S.sparks.push({x:e.clientX,y:e.clientY,vx:Math.cos(ang)*v,vy:Math.sin(ang)*v,life:1,maxLife:.4+Math.random()*.4,r:1+Math.random()*2.5,col:["0,245,255","138,46,255","255,44,251"][i%3]});
+      for(let i=0;i<12;i++){
+        const ang=(i/12)*Math.PI*2+Math.random()*.4, v=2+Math.random()*4;
+        S.sparks.push({x:e.clientX,y:e.clientY,vx:Math.cos(ang)*v,vy:Math.sin(ang)*v,life:1,maxLife:.3+Math.random()*.3,r:1+Math.random()*1.5,col:["0,245,255","138,46,255","255,44,251"][i%3]});
       }
     };
     document.addEventListener("mousemove",onMove,{passive:true});
-    document.addEventListener("click",onClick);
+    document.addEventListener("click",onClick, {passive: true});
 
     let rafId;
     function frame(ts) {
